@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Black-box segments shared from the Vídeos screen (app-private, exposed one file at a time through FileProvider). -->
+<paths>
+    <external-files-path name="blackbox" path="Movies/blackbox/" />
+    <files-path name="blackbox_internal" path="blackbox/" />
+</paths>
