@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var ErrDeviceDisconnected = errors.New("o app não está conectado")
+var ErrDeviceDisconnected = errors.New("the app is not connected")
 
 // Device describes the latest open ingestion connection for an authenticated identity.
 type Device struct {

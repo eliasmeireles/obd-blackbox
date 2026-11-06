@@ -54,7 +54,7 @@ func TestDeviceReplyDelivery(t *testing.T) {
 	t.Run("given duplicate replies then only the first reaches its waiter", func(t *testing.T) {
 		registry := NewDeviceRegistry()
 		conn := registry.Register("phone", discardCommand)
-		result := CommandResult{OK: true, Message: "concluído"}
+		result := CommandResult{OK: true, Message: "done"}
 		replies := make(chan CommandResult, 1)
 		conn.pending[testID] = replies
 		conn.Deliver("unknown", result)

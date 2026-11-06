@@ -98,7 +98,7 @@ func TestCommandHTTP(t *testing.T) {
 		router, _ := commandTestRouter(time.Second)
 		w := commandRequest(router, `{"name":"read_diagnostics"}`)
 		require.Equal(t, 409, w.Code)
-		require.JSONEq(t, `{"error":"o app não está conectado"}`, w.Body.String())
+		require.JSONEq(t, `{"error":"the app is not connected"}`, w.Body.String())
 	})
 	for _, body := range []string{`{"name":"unknown"}`, `{}`, `null`, `{"name":3}`, `broken`, `{"name":"clear_dtcs"} {}`} {
 		t.Run("given invalid command then bad request is returned", func(t *testing.T) {
@@ -128,11 +128,11 @@ func TestCommandSocket(t *testing.T) {
 		response := launchCommand(t, server, `{"name":"clear_dtcs"}`)
 		command := readCommand(t, ctx, conn)
 		require.Equal(t, "clear_dtcs", command.Name)
-		exchangeIngest(t, ctx, conn, `{"type":"command_result","seq":1,"command_id":"`+command.ID+`","ok":true,"message":"códigos apagados"}`, `{"type":"ack","seq":1}`)
+		exchangeIngest(t, ctx, conn, `{"type":"command_result","seq":1,"command_id":"`+command.ID+`","ok":true,"message":"codes cleared"}`, `{"type":"ack","seq":1}`)
 		result := <-response
 		require.NoError(t, result.err)
 		require.Equal(t, 200, result.status)
-		require.JSONEq(t, `{"ok":true,"message":"códigos apagados"}`, result.body)
+		require.JSONEq(t, `{"ok":true,"message":"codes cleared"}`, result.body)
 		exchangeIngest(t, ctx, conn, `{"type":"command_result","seq":2,"command_id":"`+command.ID+`","ok":true}`, `{"type":"ack","seq":2}`)
 		require.NoError(t, conn.CloseNow())
 		require.Eventually(t, func() bool { return len(h.devices.Devices()) == 0 }, time.Second, time.Millisecond)

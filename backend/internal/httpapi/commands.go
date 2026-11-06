@@ -42,7 +42,7 @@ func (h *Handler) command(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Name != "clear_dtcs" && in.Name != "read_diagnostics" {
 		h.logCommand(r, in, "invalid", started)
-		writeError(w, 400, "comando desconhecido")
+		writeError(w, 400, "unknown command")
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), h.commandTimeout)
@@ -68,7 +68,7 @@ func (h *Handler) logCommand(r *http.Request, in commandInput, outcome string, s
 func commandResponseJSON(w http.ResponseWriter, result telemetry.CommandResult, err error) {
 	switch {
 	case errors.Is(err, context.DeadlineExceeded):
-		writeError(w, 504, "o app não respondeu a tempo")
+		writeError(w, 504, "the app did not answer in time")
 	case err != nil:
 		writeError(w, 409, telemetry.ErrDeviceDisconnected.Error())
 	default:
