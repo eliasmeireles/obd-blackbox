@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title data-i18n="product">OBD Black Box</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div id="login-settings"><details id="settings" class="settings"><summary data-i18n-aria-label="settings"><span class="settings-icon" aria-hidden="true">⚙</span><span class="settings-label" data-i18n="settings"></span></summary><div class="settings-panel"><label for="language-select"><span data-i18n="language"></span><select id="language-select"><option value="auto" data-i18n="auto"></option><option value="pt-BR" data-i18n="portuguese"></option><option value="en" data-i18n="english"></option></select></label><label for="theme-select"><span data-i18n="theme"></span><select id="theme-select"><option value="auto" data-i18n="auto"></option><option value="dark" data-i18n="dark"></option><option value="light" data-i18n="light"></option></select></label><button id="logout" class="quiet" data-i18n="logout" hidden></button></div></details></div>
+  <main id="login" class="login-shell" hidden>
+    <div class="card login-card">
+      <div class="eyebrow" data-i18n="product"></div><h1 data-i18n="login_title"></h1>
+      <p class="muted" data-i18n="login_description"></p>
+      <p id="login-error" class="error" role="alert"></p>
+      <form id="login-form" hidden><label for="api-key" data-i18n="api_key"></label><input id="api-key" type="password" autocomplete="current-password" required><button id="login-submit" type="submit" data-i18n="sign_in"></button></form>
+      <a id="login-button" class="button" hidden data-i18n="oidc_login"></a>
+    </div>
+  </main>
+  <div id="dashboard" class="shell" hidden>
+    <header class="main-header"><div><div class="eyebrow" data-i18n="product"></div><h1 data-i18n="telemetry"></h1></div><div class="header-actions"><div class="source-selector" role="group" data-i18n-aria-label="source_label"><button id="source-obd" aria-pressed="true" data-i18n="real_data"></button><button id="source-sim" aria-pressed="false" data-i18n="simulation"></button></div><label id="device-selector" class="device-selector" hidden><span data-i18n="device"></span><select id="device-select"></select></label><div id="dashboard-settings"></div></div></header>
+    <p id="simulation-banner" class="alert-banner" role="status" hidden data-i18n="simulation_banner"></p>
+    <nav data-i18n-aria-label="panels"><button id="live-tab" aria-current="page" data-i18n="live"></button><button id="sessions-tab" class="quiet" data-i18n="sessions"></button><button id="car-tab" class="quiet" data-i18n="car"></button><button id="logs-tab" class="quiet" data-i18n="logs"></button></nav>
+    <p id="devices-error" class="error" role="status"></p>
+    <p id="app-message" class="error" role="alert"></p>
+    <section id="live-view" data-i18n-aria-label="live_telemetry">
+      <div class="live-heading"><div><span id="status-dot" class="dot"></span><strong id="live-status" data-i18n="waiting"></strong><span id="source" class="badge"></span></div><span id="last-time" class="muted" data-i18n="no_samples"></span></div>
+      <p id="live-empty" class="empty" role="status"></p>
+      <p id="stream-status" class="muted small" role="status"></p>
+      <p id="stale-banner" class="alert-banner stale-banner" role="status" hidden></p>
+      <div id="alert-banner" class="alert-banner" role="status" hidden></div>
+      <div class="live-layout"><article class="card gauge-card" data-i18n-aria-label="speed_rpm">
+        <svg class="gauge" viewBox="0 0 320 280" role="img" aria-labelledby="gauge-title"><title id="gauge-title"></title><path id="gauge-track" class="gauge-track"/><path id="gauge-red" class="gauge-red"/><path id="gauge-fill" class="gauge-fill"/><text x="54" y="253" class="gauge-tick">0</text><text x="246" y="253" class="gauge-tick" data-i18n="gauge_tick"></text><text id="speed" x="160" y="151" class="speed"></text><text x="160" y="179" class="gauge-unit" data-i18n="unit_speed_kmh"></text><text id="rpm" x="160" y="221" class="rpm"></text></svg>
+        <p class="muted small" data-i18n="gauge_caption"></p>
+      </article><div id="main-tiles" class="tiles"></div></div>
+      <div id="secondary-tiles" class="secondary-grid"></div>
+      <div id="extra-tiles" class="secondary-grid" data-i18n-aria-label="other_signals"></div>
+      <article class="card events-card"><h2 data-i18n="recent_events"></h2><div id="recent-events" class="event-list"></div></article>
+    </section>
+    <section id="sessions-view" data-i18n-aria-label="session_history" hidden>
+      <div class="section-heading"><div><h2 data-i18n="sessions"></h2><p class="muted" data-i18n="explore_trips"></p></div><div class="actions"><button id="delete-all" class="danger quiet"></button><button id="refresh-sessions" class="quiet" data-i18n="refresh"></button></div></div>
+      <p id="delete-message" role="status"></p>
+      <div id="session-list" class="session-list"></div>
+      <article id="session-detail" class="session-detail" hidden>
+        <div class="section-heading"><div><h2 id="detail-title"></h2><p id="detail-range" class="muted"></p></div><div class="actions"><button id="reset-zoom" class="quiet" data-i18n="reset_zoom"></button><a id="export-csv" class="button" download data-i18n="export_csv"></a></div></div>
+        <p id="detail-status" role="status" class="muted"></p><div id="session-events" class="event-list"></div><div id="charts"></div>
+      </article>
+    </section>
+    <section id="car-view" data-i18n-aria-label="diagnostics" hidden>
+      <div class="section-heading"><div><h2 data-i18n="car"></h2><p id="device-status" class="muted" role="status"></p></div><div class="actions"><button id="read-diagnostics" disabled data-i18n="read_again"></button><button id="clear-dtcs" class="danger quiet" disabled data-i18n="clear_dtcs"></button><button id="refresh-car" class="quiet" data-i18n="refresh"></button></div></div>
+      <p id="command-result" role="status"></p><p id="car-error" class="error" role="alert"></p>
+      <div id="car-summary" hidden><p id="car-time" class="muted"></p><h2 id="car-mil" class="alert-banner"></h2><p id="car-count" class="car-count"></p></div>
+      <div id="car-detail" class="diagnostics-grid"></div>
+      <h3 class="history-heading" data-i18n="diagnostic_history"></h3><div id="car-history" class="snapshot-history"></div>
+    </section>
+    <section id="logs-view" data-i18n-aria-label="app_logs" hidden>
+      <div class="section-heading"><div><h2 data-i18n="logs"></h2><p class="muted" data-i18n="logs_description"></p></div><button id="refresh-logs" class="quiet" data-i18n="refresh"></button></div>
+      <div class="log-filters">
+        <label><span data-i18n="level"></span><select id="logs-level"><option value="" data-i18n="all"></option><option value="info" data-i18n="info_above"></option><option value="warn" data-i18n="warnings_errors"></option><option value="error" data-i18n="errors_only"></option></select></label>
+        <label><span data-i18n="tag"></span><select id="logs-tag"><option value="" data-i18n="all"></option><option value="elm" data-i18n="tag_elm"></option><option value="source" data-i18n="tag_source"></option><option value="upload" data-i18n="tag_upload"></option><option value="app" data-i18n="tag_app"></option><option value="crash" data-i18n="tag_crash"></option></select></label>
+        <label><span data-i18n="period"></span><select id="logs-period"><option value="900000" data-i18n="period_15m"></option><option value="3600000" data-i18n="period_1h"></option><option value="86400000" data-i18n="period_24h"></option><option value="604800000" data-i18n="period_7d"></option></select></label>
+        <label><span data-i18n="search_text"></span><input id="logs-search" type="search" data-i18n-placeholder="search_logs"></label>
+        <label class="checkbox-label"><input id="logs-auto" type="checkbox" checked><span data-i18n="auto_refresh"></span></label>
+      </div>
+      <p id="logs-status" class="muted small" role="status"></p>
+      <div id="logs-scroll" class="card logs-scroll"><table class="logs-table"><thead><tr><th data-i18n="time"></th><th data-i18n="level"></th><th data-i18n="tag"></th><th data-i18n="message"></th><th data-i18n="device"></th></tr></thead><tbody id="logs-body"></tbody></table><p id="logs-empty" class="empty" hidden></p></div>
+    </section>
+  </div>
+  <dialog id="clear-dialog" aria-labelledby="clear-title" aria-describedby="clear-description">
+    <form id="clear-form"><h2 id="clear-title" data-i18n="clear_dtcs"></h2>
+      <div id="clear-description"><p data-i18n="clear_description"></p><p data-i18n="clear_warning"></p><p data-i18n="clear_condition"></p></div>
+      <div class="actions dialog-actions"><button id="clear-cancel" type="button" class="quiet" autofocus data-i18n="cancel"></button><button id="clear-submit" type="submit" class="danger" data-i18n="delete"></button></div>
+    </form>
+  </dialog>
+  <dialog id="delete-dialog" aria-labelledby="delete-title" aria-describedby="delete-description">
+    <form id="delete-form">
+      <h2 id="delete-title"></h2>
+      <p id="delete-description"></p>
+      <div id="delete-confirmation" hidden><label for="delete-word" data-i18n="delete_confirmation"></label><input id="delete-word" autocomplete="off" spellcheck="false"></div>
+      <p id="delete-error" class="error" role="alert"></p>
+      <div class="actions dialog-actions"><button id="delete-cancel" type="button" class="quiet" autofocus data-i18n="cancel"></button><button id="delete-submit" class="danger" type="submit" data-i18n="delete"></button></div>
+    </form>
+  </dialog>
+  <p id="boot-status" class="boot-status" role="status" data-i18n="connecting"></p>
+  <noscript lang="en">Please enable JavaScript. / Ative o JavaScript.</noscript>
+</body>
+</html>
