@@ -28,4 +28,3 @@ internal fun ClearCodesDialog(onDismiss: () -> Unit, onConfirm: () -> Unit) {
         dismissButton = { TextButton(onClick = onDismiss) { Text(text(R.string.msg_cancelar), color = AppColors.Muted) } },
     )
 }
-
