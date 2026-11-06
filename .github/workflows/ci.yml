@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: obd
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d obd" --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+      - name: Format, vet and test
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgres://postgres:test@localhost:5432/obd?sslmode=disable
+        run: |
+          test -z "$(gofmt -l .)"
+          go vet ./...
+          go test -race ./...
+      - name: Dashboard scripts
+        run: for f in backend/web/static/*.js; do node --check "$f"; done
+      - name: Fake bridge
+        run: python3 -m unittest discover -s tools/fake-bridge/tests
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests and APK (no server URL)
+        working-directory: android
+        run: ./gradlew testDebugUnitTest assembleDebug
