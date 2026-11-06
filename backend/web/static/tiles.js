@@ -33,7 +33,7 @@ export function renderTiles(v) {
   for (const [key, value] of Object.entries(v)) {
     if (rendered.has(key)) continue;
     if (!extras.has(key)) { const [label, unit] = signal(key); extra.append(createTile([key, label, unit], true, extras)); }
-    extras.get(key).value.textContent = valueText(value);
+    extras.get(key).value.textContent = valueText(value, key);
   }
   extra.hidden = !extra.children.length;
   const distance = v.speed_kmh >= 3 && v.fuel_rate_lph_est > 0;
