@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">OBD Black Box</string>
     <string name="my_car">Meu carro</string>
     <string name="msg_o_app_nao_esta_conectado_ao_carro">"o app não está conectado ao carro"</string>
     <string name="msg_comando_desconhecido">"comando desconhecido"</string>
