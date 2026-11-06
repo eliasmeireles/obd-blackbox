@@ -174,6 +174,11 @@ func (f *fakeLoginProvider) Methods() loginauth.Methods {
 // AllowAPIKeyLogin selects whether the built-in dashboard key login is available.
 func (f *fakeLoginProvider) AllowAPIKeyLogin() bool { return f.allowAPIKey }
 
+type externalLogoutProvider struct{ fakeLoginProvider }
+
+// LogoutURL points the browser to the identity provider's own logout.
+func (externalLogoutProvider) LogoutURL(*http.Request) string { return "https://idp.example/logout" }
+
 // TestLoginRoutes checks default methods, provider replacement and public login routes.
 func TestLoginRoutes(t *testing.T) {
 	t.Run("given default authentication then methods and key login are public", func(t *testing.T) {
@@ -209,6 +214,14 @@ func TestLoginRoutes(t *testing.T) {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, me)
 		require.JSONEq(t, `{"name":"external-subject"}`, response.Body.String())
+	})
+	t.Run("given a provider with an external logout then logout clears the cookie and returns its URL", func(t *testing.T) {
+		router := NewRouter(&fakeService{}, telemetry.NewHub(), testAuth(), &externalLogoutProvider{}, fstest.MapFS{}, time.UTC, slog.Default())
+		logout := httptest.NewRecorder()
+		router.ServeHTTP(logout, httptest.NewRequest("POST", "/api/v1/auth/logout", nil))
+		require.Equal(t, 200, logout.Code)
+		require.Equal(t, -1, logout.Result().Cookies()[0].MaxAge)
+		require.JSONEq(t, `{"logoutUrl":"https://idp.example/logout"}`, logout.Body.String())
 	})
 	t.Run("given a provider allowing API keys then the built-in login remains available", func(t *testing.T) {
 		router := NewRouter(&fakeService{}, telemetry.NewHub(), testAuth(), &fakeLoginProvider{allowAPIKey: true}, fstest.MapFS{}, time.UTC, slog.Default())

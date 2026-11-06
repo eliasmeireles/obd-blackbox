@@ -146,7 +146,8 @@ type LoginProvider interface {
 `Start` signs a dashboard cookie for an identity which the provider has already authenticated and authorized.
 The identity must be non-empty and contain neither `|` nor newlines. Mount provider routes outside the
 reserved `/api/v1/auth/*`, `/login`, health and dashboard routes. The server owns logout and cookie cleanup;
-providers can mount additional external logout routes if needed. Device bearer keys remain enabled even
+a provider that also implements `auth.ExternalLogout` (`LogoutURL(*http.Request) string`) gets that URL in the
+logout response, and the dashboard then sends the browser there to end the identity provider's session. Device bearer keys remain enabled even
 when `AllowAPIKeyLogin()` returns false.
 
 Here is a pseudo-OIDC provider. `VerifiedFlow` represents your chosen authentication implementation; its

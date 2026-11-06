@@ -98,7 +98,18 @@ func mountLogin(mux *http.ServeMux, sessions *Auth, login auth.LoginProvider) {
 	} else {
 		mux.HandleFunc("POST /api/v1/auth/login", func(w http.ResponseWriter, r *http.Request) { writeError(w, 404, "API-key login is disabled") })
 	}
-	mux.HandleFunc("POST /api/v1/auth/logout", sessions.Logout)
+	logout := sessions.Logout
+	if external, ok := login.(auth.ExternalLogout); ok {
+		logout = func(w http.ResponseWriter, r *http.Request) {
+			_ = sessions.End(w, r)
+			body := map[string]any{}
+			if target := external.LogoutURL(r); target != "" {
+				body["logoutUrl"] = target
+			}
+			writeJSON(w, 200, body)
+		}
+	}
+	mux.HandleFunc("POST /api/v1/auth/logout", logout)
 }
 
 // mountAPI installs authenticated telemetry, history and device routes.

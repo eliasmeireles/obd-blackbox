@@ -26,3 +26,10 @@ type LoginProvider interface {
 	Methods() Methods
 	AllowAPIKeyLogin() bool
 }
+
+// ExternalLogout can be implemented by a LoginProvider whose identity provider keeps its own session.
+// After the dashboard cookie is cleared, the logout response carries this URL and the dashboard sends the
+// browser there (an OIDC end-session URL, for example). An empty URL means nothing else to end.
+type ExternalLogout interface {
+	LogoutURL(*http.Request) string
+}
