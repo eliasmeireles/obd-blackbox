@@ -1,20 +1,33 @@
 # Fake bridge
 
-Simulador TCP TMB/1 para desenvolver o app Android sem o ESP32.
+A TCP server that speaks the TMB/1 bridge protocol ([`docs/bridge-protocol.md`](../../docs/bridge-protocol.md)) with a
+simulated car, so the app can be developed without a vehicle or an adapter.
 
 ```sh
 python3 tools/fake-bridge/fake_bridge.py
 ```
 
-Por padrão escuta em `127.0.0.1:35000`. Use `--host`, `--port`, `--seed` e
-`--unsupported 49,4C` para configurar o servidor e simular PIDs sem resposta.
-Cada conexão tem sua própria configuração; todas compartilham o mesmo carro.
+It listens on `127.0.0.1:35000` by default. Use `--host`, `--port`, `--seed` and `--unsupported 49,4C` to change
+the address, make the simulation repeatable and simulate PIDs that the car does not answer. Each connection has its
+own settings; all of them share the same car.
 
-Digite no console:
+Point a debug build of the app to it through `adb` (`-S` restarts the app so it reads the setting):
 
-- `stall`: simula a falha e a retomada do motor.
-- `lowvolt`: simula falha do alternador.
-- `normal`: volta ao ciclo de condução.
-- `dtc add P0101` ou `dtc pending P0300`: adiciona um código.
-- `dtc clear`: limpa os códigos.
-- `help`: mostra os comandos; `quit`: encerra.
+```sh
+adb reverse tcp:35000 tcp:35000
+adb shell am start -S -n io.github.eliasmeireles.obdblackbox/.ui.MainActivity --es bridge_tcp localhost:35000
+# --es bridge_tcp off goes back to the Bluetooth adapter
+```
+
+Simulation mode (Menu → Data) takes precedence over the bridge; turn it off to read the fake bridge.
+
+Type in the console:
+
+- `stall`: the engine stalls and restarts.
+- `lowvolt`: the alternator fails.
+- `normal`: back to the normal drive cycle.
+- `dtc add P0101` or `dtc pending P0300`: adds a trouble code.
+- `dtc clear`: clears the codes.
+- `help`: lists the commands; `quit`: exits.
+
+Tests: `python3 -m unittest discover -s tools/fake-bridge/tests`.

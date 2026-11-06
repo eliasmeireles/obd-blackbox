@@ -65,11 +65,11 @@ def apply_console(line: str, engine: Engine, now: float) -> str:
     command = parts[0].lower()
     if command in ("stall", "lowvolt", "normal") and len(parts) == 1:
         engine.set_scenario(command, now)
-        return f"Cenário: {command}."
+        return f"Scenario: {command}."
     if command == "dtc" and len(parts) == 2 and parts[1].lower() == "clear":
         engine.stored.clear()
         engine.pending.clear()
-        return "DTCs limpos."
+        return "DTCs cleared."
     if command == "dtc" and len(parts) == 3 and parts[1].lower() in ("add", "pending"):
         code = parts[2].upper()
         if CODE_RE.fullmatch(code):
@@ -78,10 +78,10 @@ def apply_console(line: str, engine: Engine, now: float) -> str:
                 target.append(code)
             return f"DTC {parts[1].lower()}: {code}."
     if command == "help" and len(parts) == 1:
-        return "Comandos: stall, lowvolt, normal, dtc add CODIGO, dtc pending CODIGO, dtc clear, help, quit."
+        return "Commands: stall, lowvolt, normal, dtc add CODE, dtc pending CODE, dtc clear, help, quit."
     if command == "quit" and len(parts) == 1:
-        return "Encerrando."
-    return "Comando inválido. Digite help."
+        return "Shutting down."
+    return "Invalid command. Type help."
 
 
 async def console(engine: Engine, stop: asyncio.Event) -> None:
@@ -104,7 +104,7 @@ async def run(args: argparse.Namespace) -> None:
     clients: set[Session] = set()
     stop = asyncio.Event()
     server = await asyncio.start_server(lambda r, w: serve_client(r, w, engine, set(args.unsupported), clients), args.host, args.port)
-    print(f"Fake bridge em {args.host}:{args.port}", flush=True)
+    print(f"Fake bridge on {args.host}:{args.port}", flush=True)
     console_task = asyncio.create_task(console(engine, stop))
     async with server:
         await stop.wait()
@@ -119,7 +119,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Fake bridge TMB/1")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=35000)
-    parser.add_argument("--unsupported", default="", help="PIDs que devem responder NA, separados por vírgula")
+    parser.add_argument("--unsupported", default="", help="comma-separated PIDs that answer NA")
     parser.add_argument("--seed", type=int, default=None)
     args = parser.parse_args()
     args.unsupported = [pid.strip().upper() for pid in args.unsupported.split(",") if pid.strip()]

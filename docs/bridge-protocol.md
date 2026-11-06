@@ -98,8 +98,8 @@ Unavailable scalar fields are omitted; clients must distinguish unavailable data
 and sends a second snapshot with reason `after_clear` before `OK DTC CLEAR` or `ERR DTC CLEAR <reason>`.
 If the first snapshot cannot be read or saved, mode 04 is **never** sent. The Android in-process ELM bridge
 saves that snapshot durably in its upload queue before mode 04; upload can complete later when connectivity returns.
-A refusal still produces an `after_clear` snapshot when the ECU is reachable. Reasons are in Portuguese,
-for example `a central só apaga com a ignição ligada e o motor desligado`.
+A refusal still produces an `after_clear` snapshot when the ECU is reachable. Reasons are human-readable text
+in the app language, for example `the ECU only clears with the ignition on and the engine off`.
 
 Both commands are queued and run between polling cycles on the adapter's worker thread. The app waits up to
 60 seconds for the final result. Clear requests require user confirmation in the requesting UI (including the
@@ -112,5 +112,5 @@ the invalid payload; other failures retain it for retry.
 The ingest socket stays open while a server is configured, even without samples. Server messages
 `{"type":"command","id":"<uuid>","name":"clear_dtcs"}` (or `read_diagnostics`) are independent of `seq`
 replies. The app returns an acknowledged message
-`{"type":"command_result","seq":2,"command_id":"<uuid>","ok":true,"message":"diagnóstico lido"}`.
+`{"type":"command_result","seq":2,"command_id":"<uuid>","ok":true,"message":"diagnostics read"}`.
 The server waits up to 90 seconds; unknown commands and command timeouts return `ok:false`.
