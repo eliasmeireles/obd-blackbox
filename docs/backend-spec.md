@@ -296,99 +296,99 @@ outside the test functions calls `t.Skip` otherwise).
 Multi-stage `Dockerfile`: `golang:1.27.3-alpine` builder (`CGO_ENABLED=0`, `-trimpath -ldflags="-s -w"`), runtime
 `alpine:3.22` with CA certificates, timezone data and UID/GID 65532, `EXPOSE 8080`, entrypoint the binary. Must build for `linux/arm64`.
 
-## Diagnósticos completos do carro
+## Full vehicle diagnostics
 
-A migração `0003_diagnostics.sql` acrescenta `diagnostics(session_id UUID NOT NULL REFERENCES sessions(id)
-ON DELETE CASCADE, t TIMESTAMPTZ NOT NULL, data JSONB NOT NULL, PRIMARY KEY(session_id,t))` e um índice por
-`t DESC`. Cada snapshot é um objeto JSON com `t` positivo (epoch ms) e `reason` obrigatório:
-`connect`, `manual`, `before_clear` ou `after_clear`. O snapshot inteiro deve ter no máximo 64 KiB.
-Todos os demais campos podem faltar ou ser nulos. Campos futuros são preservados; a central não precisa
-suportar todos os PIDs. O JSON é armazenado integralmente em JSONB (sem descartar campos desconhecidos).
+Migration `0003_diagnostics.sql` adds `diagnostics(session_id UUID NOT NULL REFERENCES sessions(id)
+ON DELETE CASCADE, t TIMESTAMPTZ NOT NULL, data JSONB NOT NULL, PRIMARY KEY(session_id,t))` and an index on
+`t DESC`. Each snapshot is a JSON object with a positive `t` (epoch ms) and a required `reason`:
+`connect`, `manual`, `before_clear` or `after_clear`. The whole snapshot must be at most 64 KiB.
+Every other field may be missing or null. Future fields are kept; the ECU does not need to support every
+PID. The JSON is stored as is in JSONB (unknown fields are not dropped).
 
 ```json
 {"t":1793981471775,"reason":"connect","adapter":"ELM327 v1.5","protocol":"7","ecu_id":"18DAF110","vin":null,"calibration_id":null,"ecu_name":null,"mil_on":true,"dtc_count":1,"monitors":[{"name":"misfire","available":true,"complete":true}],"fuel_system":"closed_loop","supported_pids":["01","03","04"],"values":{"run_time_s":512,"distance_mil_km":120,"baro_kpa":92,"o2_b1s2_v":0.65},"dtcs":{"stored":["P0130"],"pending":[],"permanent":[]},"freeze_frame":{"dtc":"P0130","values":{"rpm":850,"coolant_c":80}}}
 ```
 
 `monitors[].name`: `misfire`, `fuel_system`, `components`, `catalyst`, `heated_catalyst`, `evap`,
-`secondary_air`, `ac_refrigerant`, `o2_sensor`, `o2_heater`, `egr`. `available` e `complete` indicam
-suporte e conclusão do autoteste. `fuel_system`: `open_loop_cold`, `closed_loop`, `open_loop_load`,
-`open_loop_fault` ou `closed_loop_fault`.
+`secondary_air`, `ac_refrigerant`, `o2_sensor`, `o2_heater`, `egr`. `available` and `complete` tell whether
+the self-test is supported and finished. `fuel_system`: `open_loop_cold`, `closed_loop`, `open_loop_load`,
+`open_loop_fault` or `closed_loop_fault`.
 
-`values` e `freeze_frame.values` usam os nomes dos sinais das amostras, além de `run_time_s`,
+`values` and `freeze_frame.values` use the sample signal names, plus `run_time_s`,
 `distance_mil_km`, `distance_since_clear_km`, `warmups_since_clear`, `baro_kpa`, `o2_b1s2_v`,
-`relative_throttle_pct`, `throttle_b_pct`, `pedal_e_pct` e `obd_standard`. A interface apresenta
-chaves desconhecidas pelo próprio nome. `freeze_frame` é a foto do momento da falha guardada pela central;
-a hora exibida no histórico é a hora de coleta do snapshot, não uma hora independente da falha.
+`relative_throttle_pct`, `throttle_b_pct`, `pedal_e_pct` and `obd_standard`. The dashboard shows
+unknown keys by their own name. `freeze_frame` is the snapshot of the moment of the fault kept by the ECU;
+the time shown in the history is when the snapshot was collected, not an independent time of the fault.
 
-- `POST /api/v1/sessions/{id}/diagnostics`: corpo = o snapshot. Retorna 200 `{"stored":1}` ou
-  `{"stored":0}` quando já existe a mesma sessão e instante (`ON CONFLICT DO NOTHING`). Retorna 404
-  para sessão inexistente e 400 para UUID, JSON, timestamp, motivo ou tamanho inválidos.
-- `GET /api/v1/diagnostics?source=obd|sim&device=phone&limit=20`: retorna
-  `{"diagnostics":[{"session_id":"…","t":1793981471775,"data":{…}}]}`, ordenado do mais recente para o
-  mais antigo. Limite padrão 20, máximo 200, mínimo 1. `source` omitido inclui todas as origens;
-  origem inválida ou vazia é 400. Sem resultados: `{"diagnostics":[]}`.
-- WebSocket de ingestão: `{"type":"diagnostics","seq":4,"session_id":"…","diagnostics":{…}}` usa a
-  mesma validação/persistência e retorna `{"type":"ack","seq":4}`. Erros usam o envelope existente,
-  inclusive 400 para snapshots acima de 64 KiB (o limite do envelope WebSocket continua 2 MiB).
+- `POST /api/v1/sessions/{id}/diagnostics`: body = the snapshot. Returns 200 `{"stored":1}`, or
+  `{"stored":0}` when the same session and instant already exist (`ON CONFLICT DO NOTHING`). Returns 404
+  for an unknown session and 400 for an invalid UUID, JSON, timestamp, reason or size.
+- `GET /api/v1/diagnostics?source=obd|sim&device=phone&limit=20`: returns
+  `{"diagnostics":[{"session_id":"…","t":1793981471775,"data":{…}}]}`, newest first.
+  Default limit 20, maximum 200, minimum 1. Without `source` every source is included;
+  an invalid or empty source is 400. No results: `{"diagnostics":[]}`.
+- Ingestion WebSocket: `{"type":"diagnostics","seq":4,"session_id":"…","diagnostics":{…}}` uses the
+  same validation and storage and returns `{"type":"ack","seq":4}`. Errors use the usual envelope,
+  including 400 for snapshots over 64 KiB (the WebSocket envelope limit stays 2 MiB).
 
-## Dispositivos conectados e comandos remotos
+## Connected devices and remote commands
 
-Cada conexão autenticada aberta em `/api/v1/ingest` entra em um registro em memória, por nome da identidade
-(nunca pela chave). A conexão mais recente vence. Uma reconexão invalida os comandos pendentes da anterior;
-o fechamento de uma conexão antiga não remove a nova. Ao desconectar, comandos pendentes falham
-imediatamente. O registro é local ao processo: o dashboard e o app precisam usar a mesma instância.
+Each authenticated connection open on `/api/v1/ingest` joins an in-memory registry, keyed by identity name
+(never by key). The most recent connection wins. A reconnection cancels the pending commands of the previous
+one; closing an old connection does not remove the new one. On disconnect, pending commands fail
+immediately. The registry is local to the process: the dashboard and the app must use the same instance.
 
-`GET /api/v1/devices` aceita as autenticações usuais e retorna todas as identidades configuradas em
-`API_KEYS`, mais as já observadas em sessões ou logs, ordenadas por nome:
+`GET /api/v1/devices` accepts the usual authentication and returns every identity configured in
+`API_KEYS`, plus those already seen in sessions or logs, sorted by name:
 
 ```json
 {"devices":[{"name":"phone","connected":true,"connected_since":1793981471775,"last_seen":1793981471775}]}
 ```
 
-`connected_since` e `last_seen` usam epoch ms ou `null` quando desconhecidos. Dispositivos sem conexão
-continuam na lista com `connected:false` e `connected_since:null`. A atividade histórica combina os
-instantes das sessões e o recebimento dos logs; a conexão atual atualiza `last_seen` ao receber frames.
-Sessões antigas com identidade vazia não criam um dispositivo sem nome.
+`connected_since` and `last_seen` are epoch ms, or `null` when unknown. Devices without a connection
+stay in the list with `connected:false` and `connected_since:null`. Past activity combines session times
+and log receipt; the current connection updates `last_seen` when frames arrive.
+Old sessions with an empty identity do not create a nameless device.
 
-`POST /api/v1/commands` exige cookie de dashboard (`requireDashboardSession`); chaves de API recebem
-403 e chamadas não autenticadas recebem 401. Corpo `{"name":"clear_dtcs","device":"phone"}` ou
-`{"name":"read_diagnostics","device":"phone"}`. Com mais de um dispositivo conectado, omitir `device`
-retorna 400. Com exatamente um, o servidor seleciona esse dispositivo. Dispositivo ausente ou desconectado
-retorna 409 `{"error":"o app não está conectado"}`. Nome desconhecido recebe 400. O servidor envia:
+`POST /api/v1/commands` requires a dashboard cookie (`requireDashboardSession`); API keys get
+403 and unauthenticated calls get 401. Body `{"name":"clear_dtcs","device":"phone"}` or
+`{"name":"read_diagnostics","device":"phone"}`. With more than one device connected, omitting `device`
+returns 400. With exactly one, the server picks that device. A missing or disconnected device
+returns 409 `{"error":"the app is not connected"}`. An unknown name gets 400. The server sends:
 
 ```json
 {"type":"command","id":"00000000-0000-4000-8000-000000000001","name":"clear_dtcs"}
 ```
 
-O app responde no mesmo socket; `ok` é booleano obrigatório, `command_id` é o UUID enviado pelo servidor e
-`seq` obedece às regras normais de ingestão:
+The app answers on the same socket; `ok` is a required boolean, `command_id` is the UUID sent by the server
+and `seq` follows the usual ingestion rules:
 
 ```json
-{"type":"command_result","seq":5,"command_id":"00000000-0000-4000-8000-000000000001","ok":true,"message":"códigos apagados"}
+{"type":"command_result","seq":5,"command_id":"00000000-0000-4000-8000-000000000001","ok":true,"message":"codes cleared"}
 {"type":"ack","seq":5}
 ```
 
-O HTTP aguarda até 90 segundos e retorna 200 `{"ok":true,"message":"códigos apagados"}` (ou `ok:false`
-com a mensagem do app). Sem resposta no prazo: 504 `{"error":"o app não respondeu a tempo"}`.
-Desconexão/substituição antes da resposta: 409. Resultados tardios, repetidos ou sem comando pendente são
-confirmados e ignorados. Um resultado só pode concluir um comando da própria conexão que o recebeu.
-Cada comando executado registra identidade do solicitante, dispositivo, nome, resultado e duração via slog.
-O envio de comandos pode intercalar-se aos acks; o app deve distinguir `type:"command"` de respostas de
-suas próprias mensagens. A ordem dos acks de ingestão continua sequencial. `coder/websocket` serializa
-`Write` concorrente; a conexão mantém apenas um leitor.
+The HTTP request waits up to 90 seconds and returns 200 `{"ok":true,"message":"codes cleared"}` (or `ok:false`
+with the app's message). No answer in time: 504 `{"error":"the app did not answer in time"}`.
+Disconnection or replacement before the answer: 409. Late, repeated or unmatched results are
+acknowledged and ignored. A result can only complete a command of the same connection that received it.
+Each executed command logs the requester identity, device, name, result and duration through slog.
+Commands can interleave with acks; the app must tell `type:"command"` apart from answers to its own
+messages. Ingestion acks stay in order. `coder/websocket` serialises concurrent `Write` calls; the
+connection keeps a single reader.
 
-O app realiza `read_diagnostics` coletando um novo snapshot. Para `clear_dtcs`, deve enviar/persistir
-`before_clear` antes de apagar e depois enviar `after_clear`; a condição de ignição ligada e motor desligado
-é verificada pelo app/central. O servidor encaminha o comando e conserva os snapshots recebidos.
+The app handles `read_diagnostics` by collecting a new snapshot. For `clear_dtcs` it must send and store
+`before_clear` before clearing and send `after_clear` afterwards; the ignition-on, engine-off condition
+is checked by the app and the ECU. The server forwards the command and keeps the snapshots it receives.
 
-O dashboard tem abas **Carro** (snapshots por origem, MIL, DTCs descritos, foto da falha, autotestes,
-identificação, leituras e histórico) e **Logs** (por dispositivo, independente do seletor de origem).
-Carro consulta dispositivos periodicamente e habilita comandos para o dispositivo selecionado conectado. Apagar códigos
-sempre exige diálogo explicando a preservação da leitura anterior, a limpeza da foto/códigos, o reinício
-dos autotestes, a possível volta da luz e a condição de ignição/motor. Logs consulta até 1000 registros em
-ordem decrescente, com filtros de nível, tag, período, busca local e atualização a cada 5 s desativável.
-Ao vivo conserva os cartões existentes e inclui todos os sinais adicionais com rótulo/unidade conhecidos
-ou com a própria chave quando desconhecidos. Todo texto da API é inserido com APIs de texto do DOM.
+The dashboard has the **Vehicle** tab (snapshots per source, MIL, described DTCs, freeze frame, self-tests,
+identification, readings and history) and the **Logs** tab (per device, independent of the source selector).
+Vehicle polls the devices and enables commands for the selected connected device. Clearing codes
+always asks for confirmation in a dialog explaining that the previous reading is kept, that the freeze frame and
+codes are cleared, that the self-tests restart, that the lamp may come back and the ignition/engine condition.
+Logs reads up to 1000 entries, newest first, with level, tag, period and local search filters and an
+optional refresh every 5 s. Live keeps the existing tiles and adds every other signal with its known label and
+unit, or its own key when unknown. All API text is inserted with DOM text APIs.
 
 ## Device filters
 
