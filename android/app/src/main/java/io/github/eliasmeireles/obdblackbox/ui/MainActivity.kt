@@ -197,7 +197,7 @@ class MainActivity : ComponentActivity() {
 
     /**
      * Debug builds accept the server config from adb, so the long API key never has to be typed on the phone:
-     * `adb shell am start -n <pkg>/.ui.MainActivity --es monitorapi_key <key>`.
+     * `adb shell am start -n <pkg>/.ui.MainActivity --es api_key <key>`.
      * `--es bridge_tcp localhost:35000` reads the fake bridge (`off` removes it); applied immediately.
      * `--es bridge_bt ble/<address>[/<name>]` (or `spp/…`) picks the ELM327 adapter (`off` removes it).
      */
@@ -213,7 +213,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private companion object {
-        const val EXTRA_KEY = "monitorapi_key"
+        const val EXTRA_KEY = "api_key"
         const val EXTRA_BRIDGE_TCP = "bridge_tcp"
         const val EXTRA_BRIDGE_BT = "bridge_bt"
 
