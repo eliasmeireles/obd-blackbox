@@ -14,7 +14,7 @@ enum class LogLevel(val wire: String, val priority: Int) {
     ERROR("error", Log.ERROR),
 }
 
-/** Where app log entries go: the upload queue (to monitorapi, `GET /api/v1/logs`) and logcat. */
+/** Where app log entries go: the upload queue (to the server, `GET /api/v1/logs`) and logcat. */
 fun interface AppLog {
     fun log(level: LogLevel, tag: String, message: String)
 

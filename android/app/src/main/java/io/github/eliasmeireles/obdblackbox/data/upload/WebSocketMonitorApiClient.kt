@@ -15,7 +15,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * Sends to monitorapi over one long-lived WebSocket (`/api/v1/ingest`, see docs/backend-spec.md): every call becomes
+ * Sends to the server over one long-lived WebSocket (`/api/v1/ingest`, see docs/backend-spec.md): every call becomes
  * one message and waits for the server's reply, so samples reach the dashboard as soon as they are read.
  *
  * Connection problems come back as failures without an HTTP code, which makes [FallbackMonitorApiClient] repeat the

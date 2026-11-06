@@ -25,7 +25,7 @@ class ElmDiagnosticsTest : io.github.eliasmeireles.obdblackbox.ResourceTest() {
         assertTrue(monitors.getValue("catalyst").complete)
     }
 
-    @Test fun `snapshot json follows the monitorapi contract`() {
+    @Test fun `snapshot json follows the server contract`() {
         val snapshot = DiagnosticSnapshot(
             t = 1, reason = "connect", adapter = "ELM327 v1.5", protocol = "7", ecuId = "18DAF110", vin = null,
             calibrationId = null, ecuName = null, milOn = false, dtcCount = 1, monitors = emptyList(), fuelSystem = "closed_loop",

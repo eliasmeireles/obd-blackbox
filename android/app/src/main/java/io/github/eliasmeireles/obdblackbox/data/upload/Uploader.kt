@@ -21,7 +21,7 @@ data class UploadStatus(
 enum class UploadOutcome { SENT_MORE, IDLE, FAILED, NOT_CONFIGURED }
 
 /**
- * Drains the [UploadQueue] to monitorapi, one session batch at a time, retrying with backoff. When the queue is
+ * Drains the [UploadQueue] to the server, one session batch at a time, retrying with backoff. When the queue is
  * empty it waits for [UploadSignal], so a live sample is sent as soon as it is queued.
  */
 class Uploader(

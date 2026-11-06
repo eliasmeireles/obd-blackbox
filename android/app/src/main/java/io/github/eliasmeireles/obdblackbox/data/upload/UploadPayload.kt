@@ -8,7 +8,7 @@ import java.time.Instant
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** JSON bodies of the monitorapi contract (docs/backend-spec.md). */
+/** JSON bodies of the server API contract (docs/backend-spec.md). */
 object UploadPayload {
     const val FUEL_RATE_KEY = "fuel_rate_lph_est"
     const val FUEL_LITERS_KEY = "fuel_liters_est"

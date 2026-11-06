@@ -12,7 +12,7 @@ data class FreezeFrame(val dtc: String?, val values: Map<String, Double>)
 
 /**
  * Everything the engine ECU tells about its state, beyond the live values: check-engine lamp, codes, freeze
- * frame, self-tests, identification. Serialised as the monitorapi diagnostics snapshot (docs/backend-spec.md).
+ * frame, self-tests, identification. Serialised as the server diagnostics snapshot (docs/backend-spec.md).
  */
 data class DiagnosticSnapshot(
     val t: Long,
