@@ -78,10 +78,10 @@ for phones that can connect concurrently because the most recent connection for 
 A key grants telemetry access; using it to sign in creates a dashboard session which also permits commands
 and history deletion. Give keys only to trusted devices and operators.
 
-The Android app needs the server URL **at build time** and the device key in the app's configuration.
-Build it with this deployment's reachable server URL, then enter the corresponding key value in the app.
-A phone cannot reach the server through its own `localhost`; use a reachable host or LAN address.
-This backend change does not modify the Android project or add runtime server switching.
+The Android app needs the server URL **at build time** and the device key in the app (Menu → Data → Server).
+Build it with this deployment's reachable server URL (see [Build the app](../README.md#build-the-app)), then
+enter the corresponding key value in the app. A phone cannot reach the server through its own `localhost`; use a
+reachable host or LAN address. Plain `http://` is allowed only when the build URL itself is `http://`.
 The app sends `Authorization: Bearer <key>` for HTTP and WebSocket ingestion. Session metadata and log
 entries are attributed to the key name; client JSON cannot select a different device identity.
 An ELM327-compatible OBD-II adapter is required for real telemetry; simulated sessions use `source=sim`.
